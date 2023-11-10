@@ -1,10 +1,17 @@
 import csv
+import os
+import logging
+from google.cloud import storage
 
-
-def load_data():
+def load_data_gcs():
   list = []
+  
+  client = storage.Client()
+  bucket = client.get_bucket(bucket_name)
+  blob = bucket.get_blob(file_name)
+  blob.download_to_filename(file_name)
 
-  with open("all_stocks_5yr.csv") as file:
+  with open(file_name) as file:
     reader = csv.DictReader(file)
 
     for row in reader:
@@ -60,7 +67,14 @@ def price_on_date(data, date, symbol):
 
 
 if __name__ == "__main__":
-  data = load_data()
+  logging.basicConfig(level=os.environ.get("LOGLEVEL", logging.INFO))
+
+  bucket_name = os.getenv('BUCKET_NAME') # 'javiercm-main-bucket'
+  logging.debug(f"bucket_name: {bucket_name}")
+  file_name = os.getenv('FILE_NAME') # 'all_stocks_5yr.csv'
+  logging.debug(f"file_name: {file_name}")
+
+  data = load_data_gcs()
 
   should_keep_going = True
 
